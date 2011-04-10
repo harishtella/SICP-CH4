@@ -447,9 +447,12 @@
   (eq? x false))
 
 
+;(define (make-procedure parameters body env)
+;  (let ((body-wo-defs (scan-out-defines body)))
+;	(list 'procedure parameters body-wo-defs env)))
+
 (define (make-procedure parameters body env)
-  (let ((body-wo-defs (scan-out-defines body)))
-	(list 'procedure parameters body-wo-defs env)))
+  (list 'procedure parameters body env))
 
 (define (compound-procedure? p)
   (tagged-list? p 'procedure))
@@ -648,6 +651,6 @@
 ;;; the file is loaded.
 (define the-global-environment (setup-environment))
 (define tge the-global-environment)
-(driver-loop)
+;(driver-loop)
 
 'METACIRCULAR-EVALUATOR-LOADED
