@@ -55,22 +55,23 @@
 (define (actual-value exp env)
   (force-it (eval exp env)))
 
+
+; EX 4.31
 (define (lazy-param? p)
   (if (pair? p)
 	(eq? (cadr p) 'lazy)
 	false))
-
 (define (lazy-memo-param? p)
   (if (pair? p)
 	(eq? (cadr p) 'lazy-memo)
 	false))
-
 (define (list-of-delayed/evaled-args params args env) 
   (define (proc-fn param arg)
 	(cond ((lazy-param? param) (delay-it arg env))
 		  ((lazy-memo-param? param) (delay-it-memo arg env))
 		  (else (actual-value arg env))))
   (map proc-fn params args))
+
 
 (define (procedure-parameters-wo-opts proc)
   (map (lambda (x) (if (pair? x) (car x) x))
