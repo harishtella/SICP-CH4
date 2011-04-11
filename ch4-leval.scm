@@ -1,35 +1,14 @@
 ;;;;LAZY EVALUATOR FROM SECTION 4.2 OF
 ;;;; STRUCTURE AND INTERPRETATION OF COMPUTER PROGRAMS
 
-;;;;Matches code in ch4.scm
-;;;; Also includes enlarged primitive-procedures list
-
-;;;;This file can be loaded into Scheme as a whole.
-;;;;**NOTE**This file loads the metacircular evaluator of
-;;;;  sections 4.1.1-4.1.4, since it uses the expression representation,
-;;;;  environment representation, etc.
-;;;;  You may need to change the (load ...) expression to work in your
-;;;;  version of Scheme.
-;;;;**WARNING: Don't load mceval twice (or you'll lose the primitives
-;;;;  interface, due to renamings of apply).
-
-;;;;Then you can initialize and start the evaluator by evaluating
-;;;; the two lines at the end of the file ch4-mceval.scm
-;;;; (setting up the global environment and starting the driver loop).
-
-
-;;;;  To run without memoization, reload the first version of force-it below
-
-
-;;**implementation-dependent loading of evaluator file
-;;Note: It is loaded first so that the section 4.2 definition
-;; of eval overrides the definition from 4.1.1
 (load "ch4-mceval.scm")
 
-
-;;;SECTION 4.2.2
-
-;;; Modifying the evaluator
+;EX 4.33
+;evaluate the following in the repl that comes after 
+;doing (driver-loop)
+; (define (cons x y) (lambda (m) (m x y))) 
+; (define (car z) (z (lambda (p q) p))) 
+; (define (cdr z) (z (lambda (p q) q))) 
 
 (define (eval exp env)
   (cond ((self-evaluating? exp) exp)
@@ -71,12 +50,11 @@
 		  ((lazy-memo-param? param) (delay-it-memo arg env))
 		  (else (actual-value arg env))))
   (map proc-fn params args))
-
-
 (define (procedure-parameters-wo-opts proc)
   (map (lambda (x) (if (pair? x) (car x) x))
 	   (procedure-parameters proc)))
 
+#|
 (define (apply procedure arguments env)
   (cond ((primitive-procedure? procedure)
          (apply-primitive-procedure
@@ -88,6 +66,25 @@
           (extend-environment
            (procedure-parameters-wo-opts procedure)
            (list-of-delayed/evaled-args (procedure-parameters procedure)
+								   arguments 
+								   env) ; changed
+           (procedure-environment procedure))))
+        (else
+         (error
+          "Unknown procedure type -- APPLY" procedure))))
+|#
+
+(define (apply procedure arguments env)
+  (cond ((primitive-procedure? procedure)
+         (apply-primitive-procedure
+          procedure
+          (list-of-arg-values arguments env))) ; changed
+        ((compound-procedure? procedure)
+         (eval-sequence
+          (procedure-body procedure)
+          (extend-environment
+           (procedure-parameters procedure)
+           (delayed-args (procedure-parameters procedure)
 								   arguments 
 								   env) ; changed
            (procedure-environment procedure))))
