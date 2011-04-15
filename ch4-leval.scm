@@ -55,6 +55,7 @@
 	   (procedure-parameters proc)))
 
 #|
+; apply - for ex. 4.31
 (define (apply procedure arguments env)
   (cond ((primitive-procedure? procedure)
          (apply-primitive-procedure
@@ -74,6 +75,7 @@
           "Unknown procedure type -- APPLY" procedure))))
 |#
 
+; apply - that behaves like the one initially in this file
 (define (apply procedure arguments env)
   (cond ((primitive-procedure? procedure)
          (apply-primitive-procedure
@@ -84,9 +86,7 @@
           (procedure-body procedure)
           (extend-environment
            (procedure-parameters procedure)
-           (delayed-args (procedure-parameters procedure)
-								   arguments 
-								   env) ; changed
+           (list-of-delayed-args arguments env) 
            (procedure-environment procedure))))
         (else
          (error
