@@ -9,11 +9,13 @@
 ; (define (cons x y) (lambda (m) (m x y))) 
 ; (define (car z) (z (lambda (p q) p))) 
 ; (define (cdr z) (z (lambda (p q) q))) 
+; 
+; (define x '(a b c))
 
 (define (eval exp env)
   (cond ((self-evaluating? exp) exp)
         ((variable? exp) (lookup-variable-value exp env))
-        ((quoted? exp) (text-of-quotation exp))
+        ((quoted? exp) (eval (quotation->lambda exp) env))
         ((assignment? exp) (eval-assignment exp env))
         ((definition? exp) (eval-definition exp env))
         ((if? exp) (eval-if exp env))
@@ -31,9 +33,25 @@
         (else
          (error "Unknown expression type -- EVAL" exp))))
 
+;EX 4.33
+(define (quotation->lambda exp)
+  (let ((q (text-of-quotation exp)))
+	(if (pair? q)
+	  (lazy-consify q) 
+	  q)))
+
+(define (lazy-consify real-list)
+  ;(display real-list)
+  (if (eq? real-list nil)
+	nil
+	(let ((a (car real-list))
+		  (b (cdr real-list)))
+	  (make-lambda 
+		'(m) 
+		(list (list 'm '(quote a) (lazy-consify b)))))))
+
 (define (actual-value exp env)
   (force-it (eval exp env)))
-
 
 ; EX 4.31
 (define (lazy-param? p)
@@ -195,3 +213,5 @@
         ))
 
 'LAZY-EVALUATOR-LOADED
+
+(driver-loop)
