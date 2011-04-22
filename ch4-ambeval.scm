@@ -18,9 +18,62 @@
 ;;;;Then you can initialize and start the evaluator by evaluating
 ;;;; the two lines at the end of the file ch4-mceval.scm
 ;;;; (setting up the global environment and starting the driver loop).
+
+
 ;;;;In the driver loop, do
-;(define (require p)
-;  (if (not p) (amb)))
+#|
+(define (require p)
+  (if (not p) (amb)))
+
+(define (an-element-of items)
+  (require (not (null? items)))
+  (amb (car items) (an-element-of (cdr items))))
+
+(define (an-integer-starting-from n)
+  (amb n (an-integer-starting-from (+ n 1))))
+
+; EX. 4.35
+(define (an-integer-between low high)
+  (require (<= low high))
+  (amb low (an-integer-between (+ low 1) high)))
+
+(define (distinct? items) 
+  (cond ((null? items) true) 
+        ((null? (cdr items)) true) 
+        ((member (car items) (cdr items)) false) 
+        (else (distinct? (cdr items))))) 
+
+(define (a-pythagorean-triple-between low high)
+  (let ((i (an-integer-between low high)))
+	(let ((j (an-integer-between i high)))
+	  (let ((k (an-integer-between j high)))
+		(require (= (+ (* i i) (* j j)) (* k k)))
+		(list i j k)))))
+
+; EX 4.40
+(define (multiple-dwelling-quick) 
+  (let ((baker (amb 1 2 3 4 5))) 
+	(require (not (= baker 5)))
+	(let ((cooper (amb 1 2 3 4 5)))
+	  (require (not (= cooper 1)))
+	  (let ((fletcher (amb 1 2 3 4 5)))
+		(require (not (= fletcher 5)))
+		(require (not (= fletcher 1)))
+		(require (not (= (abs (- fletcher cooper)) 1))) 
+		(let ((miller (amb 1 2 3 4 5)))
+		  (require (> miller cooper))
+		  (let ((smith (amb 1 2 3 4 5)))
+			(require (not (= (abs (- smith fletcher)) 1))) 
+			(require 
+			  (distinct? (list baker cooper fletcher miller smith)))
+			(list (list 'baker baker)
+				  (list 'cooper cooper) 
+				  (list 'fletcher fletcher) 
+				  (list 'miller miller) 
+				  (list 'smith smith))))))))
+
+|#
+  
 
 
 ;;**implementation-dependent loading of evaluator file
@@ -282,7 +335,9 @@
         (list '* *)
         (list '= =)
         (list '> >)
+        (list '< <)
         (list '>= >=)
+        (list '<= <=)
         (list 'abs abs)
         (list 'remainder remainder)
         (list 'integer? integer?)
@@ -293,3 +348,9 @@
 
 
 'AMB-EVALUATOR-LOADED
+
+;; Startup repl on file load
+(define the-global-environment (setup-environment))
+(define tge the-global-environment)
+(driver-loop)
+
