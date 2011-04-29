@@ -296,7 +296,34 @@
      (driver-loop))))
 
 
-
+;;; for interpreting code so I dont have to type it in
+;;; manually at the repl
+
+(define (interpret text)
+  (define (internal-loop try-again)
+    (let ((input text))
+      (if (eq? input 'try-again)
+          (try-again)
+          (begin
+            (newline)
+            (display ";;; Starting a new problem ")
+            (ambeval input
+                     the-global-environment
+                     ;; ambeval success
+                     (lambda (val next-alternative)
+                       (announce-output output-prompt)
+                       (user-print val))
+                     ;; ambeval failure
+                     (lambda ()
+                       (announce-output
+                        ";;; There are no more values of")
+                       (user-print input)))))))
+  (internal-loop
+   (lambda ()
+     (newline)
+     (display ";;; There is no current problem"))))
+
+
 ;;; Support for Let (as noted in footnote 56, p.428)
 
 (define (let? exp) (tagged-list? exp 'let))
