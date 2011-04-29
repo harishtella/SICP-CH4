@@ -414,6 +414,27 @@
 	(require (xor (= m 4) (= b 1)))
 	(list 'b b 'e e 'j j 'k k 'm m))))
 
+; EX 4.43
+; learned to see relationships from both ways to 
+; get at the answer
+(interpret 
+'(define (fun-puzzle)
+  (define (father->yacht f)
+	(cond ((eq? f 'moore) 'lorna)
+		  ((eq? f 'downing) 'melissa)
+		  ((eq? f 'hall) 'rosalind)
+		  ((eq? f 'barnacle) 'gabrielle)
+		  ((eq? f 'parker) 'mary-ann)))
+  (define (parker-daughter r l)
+	(if (eq? r 'parker) 'rosalind 'lorna))
+  (let ((lorna (amb 'downing 'hall 'parker))
+		(rosalind (amb 'downing 'hall 'parker))
+		(gabrielle (amb 'downing 'hall)))
+	(require (distinct? (list lorna rosalind gabrielle)))
+	(require (eq? (father->yacht gabrielle) (parker-daughter rosalind lorna)))
+	(list 'lorna lorna))))
+
+
 
 ;; Startup repl on file load
 (driver-loop)
