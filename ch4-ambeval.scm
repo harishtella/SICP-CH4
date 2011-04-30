@@ -574,12 +574,14 @@
 
 
 ;; EXERCISE 4.47
-(interpret
+;; this is trying to match more and more prepositional phrases going backwards,
+;; it will go into an infinite loop if you 'try again' after it returns a result with
+;; the max available prep phrases describing the verb.
 '(define (parse-verb-phrase)
   (amb (parse-word verbs)
        (list 'verb-phrase
              (parse-verb-phrase)
-             (parse-prepositional-phrase)))))
+             (parse-prepositional-phrase))))
 
 
 
