@@ -574,9 +574,15 @@
 
 
 ;; EXERCISE 4.47
-;; this is trying to match more and more prepositional phrases going backwards,
+;; this is trying to match more and more prepositional phrases going leftwards,
 ;; it will go into an infinite loop if you 'try again' after it returns a result with
 ;; the max available prep phrases describing the verb.
+;;
+;; the order does matter, if the two amb args were swapped we would immediately
+;; get an infinite loop.
+;;
+;; the original parse-verb-phrase is going rightwards and knows when it has run
+;; out of tokens to match
 '(define (parse-verb-phrase)
   (amb (parse-word verbs)
        (list 'verb-phrase
