@@ -516,6 +516,9 @@
 (interpret '(define verbs '(verb studies lectures eats sleeps)))
 (interpret '(define articles '(article the a)))
 (interpret '(define prepositions '(prep for to in by with)))
+(interpret '(define adverbs '(adverb poorly boringly sloppily)))
+(interpret '(define adjectives '(adjective smart dirty lazy brilliant)))
+
 
 (interpret 
 '(define (parse-word word-list)
@@ -539,13 +542,13 @@
 '(define (parse-prepositional-phrase)
   (list 'prep-phrase
         (parse-word prepositions)
-        (parse-noun-phrase))))
+        (parse-noun-phrase-x))))
 
 (interpret 
 '(define (parse-sentence)
   (list 'sentence
-         (parse-noun-phrase)
-         (parse-verb-phrase))))
+         (parse-noun-phrase-x)
+         (parse-verb-phrase-x))))
 
 (interpret 
 '(define (parse-verb-phrase)
@@ -571,7 +574,47 @@
                              (parse-prepositional-phrase)))))
   (maybe-extend (parse-simple-noun-phrase))))
 
+; EX 4.48
+(interpret 
+'(define (parse-verb-phrase-x)
+  (define (maybe-extend verb-phrase)
+    (amb verb-phrase
+         (maybe-extend (list 'verb-phrase
+                             verb-phrase
+                             (amb (parse-word adverbs) 
+								  (parse-prepositional-phrase))))))
+  (maybe-extend (parse-word verbs))))
 
+(interpret 
+'(define (parse-noun-phrase-x)
+
+
+; Unlike the code for EX 4.47, noun-phrase-with-adjs does not ever go into an infinite 
+; loop. This parses an adjective before doing a recursive call. If it cant parse an
+; adjective the recursive call is not made. 
+;
+; This method works here because we are looking for adjectives 
+; before the noun. In EX 4.47 it is searching for prep phrases after a verb.
+; It was searching for that initializing verb on each recursive call. 
+; When you do try-again until it goes to the other branch of the amb that doesn't
+; capture that initializing verb it goes off into an infinite loop. 
+  (define (noun-phrase-with-adjs)
+	(amb (parse-word nouns)
+		 (list 'noun-phrase 
+			   (parse-word adjectives)
+			   (noun-phrase-with-adjs))))
+  (define (noun-phrase-with-adjs-and-article)
+	(list 'noun-phrase 
+		  (parse-word articles)
+		  (noun-phrase-with-adjs)))
+  (define (maybe-prep noun-phrase)
+    (amb noun-phrase
+         (maybe-prep (list 'noun-phrase
+                             noun-phrase
+							 (parse-prepositional-phrase)))))
+  (maybe-prep (amb (noun-phrase-with-adjs)
+				   (noun-phrase-with-adjs-and-article)))))
+  
 
 ;; EXERCISE 4.47
 ;; this is trying to match more and more prepositional phrases going leftwards,
