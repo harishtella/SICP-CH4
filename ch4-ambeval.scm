@@ -48,6 +48,7 @@
         ((p-assignment? exp) (analyze-p-assignment exp))
         ((definition? exp) (analyze-definition exp))
         ((if? exp) (analyze-if exp))
+        ((if-fail? exp) (analyze-if-fail exp))
         ((lambda? exp) (analyze-lambda exp))
         ((begin? exp) (analyze-sequence (begin-actions exp)))
         ((cond? exp) (analyze (cond->if exp)))
@@ -85,6 +86,24 @@
                fail))))
 
 ;;;Conditionals and sequences
+
+; EX 4.52 
+(define (if-fail-try exp)
+  (cadr exp))
+(define (if-fail-rescue exp)
+  (caddr exp))
+(define (if-fail? exp)
+  (eq? (car exp) 'if-fail))
+(define (analyze-if-fail exp)
+  (let ((tproc (analyze (if-fail-try exp)))
+		(rproc (analyze (if-fail-rescue exp))))
+	(lambda (env succeed fail)
+	  (tproc env
+			 (lambda (tproc-val fail2)
+			   (succeed tproc-val fail2))
+			 (lambda ()
+			   (rproc env succeed fail))))))
+
 
 (define (analyze-if exp)
   (let ((pproc (analyze (if-predicate exp)))
@@ -367,6 +386,7 @@
         (list '< <)
         (list '>= >=)
         (list '<= <=)
+        (list 'even? even?)
         (list 'abs abs)
         (list 'remainder remainder)
         (list 'integer? integer?)
