@@ -210,6 +210,38 @@
                              (try-next (cdr choices))))))
       (try-next cprocs))))
 
+; EX 4.50
+(define (analyze-ramb exp)
+  (define (remove y xs)
+	(define (remove-h y xp xs)
+	  (if (null? xs)
+		xp
+		(if (eq? y (car xs)) 
+		  (append xp (cdr xs))
+		  (remove-h y 
+					(append xp (list (car xs))) 
+					(cdr xs)))))
+	(remove-h y '() xs))
+
+  (define (random-elem lst)
+	(define (nth i lst)
+	  (if (eq? i 0)
+		(car lst)
+		(nth (- i 1) (cdr lst))))
+	(nth (random (length lst)) lst))
+
+  (let ((cprocs (map analyze (amb-choices exp))))
+    (lambda (env succeed fail)
+      (define (try-next choices)
+        (if (null? choices)
+            (fail)
+			(let ((rc (random-elem choices)))
+			  (rc env
+				  succeed
+				  (lambda ()
+					(try-next (remove rc choices)))))))
+	  (try-next cprocs))))
+
 ;;;Driver loop
 
 (define input-prompt ";;; Amb-Eval input:")
@@ -638,67 +670,22 @@
 '(define (parse-word word-list)
    (let ((w (choose-one (cdr word-list)))
 		 (l (list->name word-list)))
-	 (set! l (remove w word-list))
 	 (list (car word-list) w))))
 
 (interpret 
 '(define (list->name l)
    (car l)))
 
-; returns a list like xs with first instance of y removed
-(interpret
-'(define (remove y xs)
-  (define (remove-h y xp xs)
-	(if (null? xs)
-	  xp
-	  (if (eq? y (car xs)) 
-		(append xp (cdr xs))
-		(remove-h y 
-				  (append xp (list (car xs))) 
-				  (cdr xs)))))
-  (remove-h y '() xs)))
-
 (interpret
 '(define (choose-one xs)
    (require (not (null? xs)))
-   (amb (car xs)
-		(choose-one (cdr xs)))))
+   (ramb (car xs)
+		 (choose-one (cdr xs)))))
 
 (interpret 
 '(define (gen)
    (parse-sentence)))
 
-; EX 4.50
-(define (analyze-ramb exp)
-  (define (remove y xs)
-	(define (remove-h y xp xs)
-	  (if (null? xs)
-		xp
-		(if (eq? y (car xs)) 
-		  (append xp (cdr xs))
-		  (remove-h y 
-					(append xp (list (car xs))) 
-					(cdr xs)))))
-	(remove-h y '() xs))
-
-  (define (random-elem lst)
-	(define (nth i lst)
-	  (if (eq? i 0)
-		(car lst)
-		(nth (- i 1) (cdr lst))))
-	(nth (random (length lst)) lst))
-
-  (let ((cprocs (map analyze (amb-choices exp))))
-    (lambda (env succeed fail)
-      (define (try-next choices)
-        (if (null? choices)
-            (fail)
-			(let ((rc (random-elem choices)))
-			  (rc env
-				  succeed
-				  (lambda ()
-					(try-next (remove rc choices)))))))
-	  (try-next cprocs))))
 
 ;; Startup repl on file load
 (driver-loop)
