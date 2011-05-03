@@ -45,6 +45,7 @@
         ((quoted? exp) (analyze-quoted exp))
         ((variable? exp) (analyze-variable exp))
         ((assignment? exp) (analyze-assignment exp))
+        ((p-assignment? exp) (analyze-p-assignment exp))
         ((definition? exp) (analyze-definition exp))
         ((if? exp) (analyze-if exp))
         ((lambda? exp) (analyze-lambda exp))
@@ -147,6 +148,21 @@
                                                  env)
                             (fail2)))))
              fail))))
+
+; EX 4.51
+(define (p-assignment? exp)
+  (eq? (car exp) 'permanent-set!))
+
+(define (analyze-p-assignment exp)
+  (let ((var (assignment-variable exp))
+		(vproc (analyze (assignment-value exp))))
+	(lambda (env succeed fail)
+	  (vproc env
+			 (lambda (val fail2)        
+			   (set-variable-value! var val env)
+			   (succeed 'ok
+						fail2))
+			 fail))))
 
 ;;;Procedure applications
 
@@ -373,7 +389,6 @@
 '(define (require p)
   (if (not p) (amb))))
 
-#|
  
 (interpret 
 '(define (an-element-of items)
@@ -384,6 +399,8 @@
 '(define (an-integer-starting-from n)
   (amb n (an-integer-starting-from (+ n 1)))))
 
+#|
+ 
 ; EX. 4.35
 (interpret 
 '(define (an-integer-between low high)
@@ -544,7 +561,7 @@
 				(require (safe-test q8 (list q1 q2 q3 q4 q5 q6 q7)))
 				(list q1 q2 q3 q4 q5 q6 q7 q8))))))))))
 
-|#
+
 
 ;;;SECTION 4.3.2 -- Parsing natural language
 (interpret '(define nouns '(nouns student professor cat class)))
@@ -686,6 +703,8 @@
 '(define (gen)
    (parse-sentence)))
 
+
+|#
 
 ;; Startup repl on file load
 (driver-loop)
