@@ -73,8 +73,8 @@
       (pproc env 
              (lambda (pred-value fail2) 
                (if (false? pred-value)  
-				 ;maybe this should be fail not fail2
-				 (fail2)
+				 ; XXX maybe this should be fail not fail2
+				 (fail-2)
 				 (succeed 'ok fail2))) 
 			 fail)))) 
 
