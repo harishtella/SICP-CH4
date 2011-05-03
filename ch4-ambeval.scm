@@ -34,6 +34,8 @@
 
 (define (amb? exp) (tagged-list? exp 'amb))
 (define (amb-choices exp) (cdr exp))
+(define (ramb? exp) (tagged-list? exp 'ramb))
+(define (ramb-choices exp) (cdr exp))
 
 ;; analyze from 4.1.6, with clause from 4.3.3 added
 ;; and also support for Let
@@ -50,6 +52,7 @@
         ((cond? exp) (analyze (cond->if exp)))
         ((let? exp) (analyze (let->combination exp))) ;**
         ((amb? exp) (analyze-amb exp))                ;**
+        ((ramb? exp) (analyze-ramb exp))                ;**
         ((application? exp) (analyze-application exp))
         (else
          (error "Unknown expression type -- ANALYZE" exp))))
@@ -665,6 +668,37 @@
 '(define (gen)
    (parse-sentence)))
 
+; EX 4.50
+(define (analyze-ramb exp)
+  (define (remove y xs)
+	(define (remove-h y xp xs)
+	  (if (null? xs)
+		xp
+		(if (eq? y (car xs)) 
+		  (append xp (cdr xs))
+		  (remove-h y 
+					(append xp (list (car xs))) 
+					(cdr xs)))))
+	(remove-h y '() xs))
+
+  (define (random-elem lst)
+	(define (nth i lst)
+	  (if (eq? i 0)
+		(car lst)
+		(nth (- i 1) (cdr lst))))
+	(nth (random (length lst)) lst))
+
+  (let ((cprocs (map analyze (amb-choices exp))))
+    (lambda (env succeed fail)
+      (define (try-next choices)
+        (if (null? choices)
+            (fail)
+			(let ((rc (random-elem choices)))
+			  (rc env
+				  succeed
+				  (lambda ()
+					(try-next (remove rc choices)))))))
+	  (try-next cprocs))))
 
 ;; Startup repl on file load
 (driver-loop)
