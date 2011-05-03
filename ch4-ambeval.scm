@@ -512,12 +512,12 @@
 |#
 
 ;;;SECTION 4.3.2 -- Parsing natural language
-(interpret '(define nouns '(noun student professor cat class)))
-(interpret '(define verbs '(verb studies lectures eats sleeps)))
-(interpret '(define articles '(article the a)))
-(interpret '(define prepositions '(prep for to in by with)))
-(interpret '(define adverbs '(adverb poorly boringly sloppily)))
-(interpret '(define adjectives '(adjective smart dirty lazy brilliant)))
+(interpret '(define nouns '(nouns student professor cat class)))
+(interpret '(define verbs '(verbs studies lectures eats sleeps)))
+(interpret '(define articles '(articles the a)))
+(interpret '(define prepositions '(preps for to in by with)))
+(interpret '(define adverbs '(adverbs poorly boringly sloppily)))
+(interpret '(define adjectives '(adjectives smart dirty lazy brilliant)))
 
 
 (interpret 
@@ -587,8 +587,6 @@
 
 (interpret 
 '(define (parse-noun-phrase-x)
-
-
 ; Unlike the code for EX 4.47, noun-phrase-with-adjs does not ever go into an infinite 
 ; loop. This parses an adjective before doing a recursive call. If it cant parse an
 ; adjective the recursive call is not made. 
@@ -632,6 +630,40 @@
              (parse-verb-phrase)
              (parse-prepositional-phrase))))
 
+; EX 4.49
+(interpret 
+'(define (parse-word word-list)
+   (let ((w (choose-one (cdr word-list)))
+		 (l (list->name word-list)))
+	 (set! l (remove w word-list))
+	 (list (car word-list) w))))
+
+(interpret 
+'(define (list->name l)
+   (car l)))
+
+; returns a list like xs with first instance of y removed
+(interpret
+'(define (remove y xs)
+  (define (remove-h y xp xs)
+	(if (null? xs)
+	  xp
+	  (if (eq? y (car xs)) 
+		(append xp (cdr xs))
+		(remove-h y 
+				  (append xp (list (car xs))) 
+				  (cdr xs)))))
+  (remove-h y '() xs)))
+
+(interpret
+'(define (choose-one xs)
+   (require (not (null? xs)))
+   (amb (car xs)
+		(choose-one (cdr xs)))))
+
+(interpret 
+'(define (gen)
+   (parse-sentence)))
 
 
 ;; Startup repl on file load
