@@ -55,12 +55,28 @@
         ((let? exp) (analyze (let->combination exp))) ;**
         ((amb? exp) (analyze-amb exp))                ;**
         ((ramb? exp) (analyze-ramb exp))                ;**
+		((require? exp) (analyze-require exp)) ;**
         ((application? exp) (analyze-application exp))
         (else
          (error "Unknown expression type -- ANALYZE" exp))))
 
 (define (ambeval exp env succeed fail)
   ((analyze exp) env succeed fail))
+
+; EX 4.54 , adding require as special form
+(define (require? exp) (tagged-list? exp 'require)) 
+(define (require-predicate exp) (cadr exp)) 
+
+(define (analyze-require exp) 
+  (let ((pproc (analyze (require-predicate exp)))) 
+    (lambda (env succeed fail) 
+      (pproc env 
+             (lambda (pred-value fail2) 
+               (if (false? pred-value)  
+				 (fail2)
+				 (succeed 'ok fail2))) 
+			 fail)))) 
+
 
 ;;;Simple expressions
 
@@ -404,7 +420,11 @@
 
 ;------------------------------------------------------------------------
 
- 
+#|
+
+; necessary/usefule funcs for amb evaluator 
+; these are from the book
+
 (interpret 
 '(define (require p)
   (if (not p) (amb))))
@@ -419,7 +439,6 @@
 '(define (an-integer-starting-from n)
   (amb n (an-integer-starting-from (+ n 1)))))
 
-#|
  
 ; EX. 4.35
 (interpret 
