@@ -73,6 +73,7 @@
       (pproc env 
              (lambda (pred-value fail2) 
                (if (false? pred-value)  
+				 ;maybe this should be fail not fail2
 				 (fail2)
 				 (succeed 'ok fail2))) 
 			 fail)))) 
@@ -744,6 +745,21 @@
 
 
 |#
+
+; This func return all solutions to an ambiguous program 
+; passed in as a function with no args
+; Inspired by EX 4.53
+(interpret 
+  '(define return-all-solutions
+	 (let ((solutions '()))
+	   (lambda (f)
+		 ;reset solutions to get rid of old results 
+		 (permanent-set! solutions '())
+		 (if-fail (let ((a-sol (f)))
+					(permanent-set! solutions 
+									(cons a-sol solutions))
+					(amb))
+				  solutions)))))
 
 ;; Startup repl on file load
 (driver-loop)
