@@ -73,13 +73,13 @@
       (pproc env 
              (lambda (pred-value fail2) 
                (if (false? pred-value)  
-				 ; XXX maybe this should be fail not fail2
 				 (fail2)
 				 (succeed 'ok fail2))) 
 			 fail)))) 
 
 
 ;;;Simple expressions
+
 
 (define (analyze-self-evaluating exp)
   (lambda (env succeed fail)
