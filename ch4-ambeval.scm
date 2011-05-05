@@ -74,7 +74,7 @@
              (lambda (pred-value fail2) 
                (if (false? pred-value)  
 				 ; XXX maybe this should be fail not fail2
-				 (fail-2)
+				 (fail2)
 				 (succeed 'ok fail2))) 
 			 fail)))) 
 
@@ -533,44 +533,34 @@
 	(require (eq? (father->yacht gabrielle) (parker-daughter rosalind lorna)))
 	(list 'lorna lorna))))
 
+|#
 
 ; EX 4.44
 (interpret
 '(define (eight-queens)
   (define (row q)
-	(car q))
+	(cdr q))
   (define (col q)
-	(display "col")
-	(cadr q))
+	(car q))
   (define (col-num q)
 	(let ((c (col q)))
-	  (cond ((eq? q 'a) 1)
-			((eq? q 'b) 2)
-			((eq? q 'c) 3)
-			((eq? q 'd) 4)
-			((eq? q 'e) 5)
-			((eq? q 'f) 6)
-			((eq? q 'g) 7)
-			((eq? q 'h) 8))))
+	  (cond ((eq? c 'a) 1)
+			((eq? c 'b) 2)
+			((eq? c 'c) 3)
+			((eq? c 'd) 4)
+			((eq? c 'e) 5)
+			((eq? c 'f) 6)
+			((eq? c 'g) 7)
+			((eq? c 'h) 8))))
   (define (on-diag q1 q2)
 	(= (abs (- (row q1) (row q2)))
 	   (abs (- (col-num q1) (col-num q2)))))
   (define (safe? q-pair)
-	(display "safe")
 	(let ((q1 (car q-pair))
 		  (q2 (cadr q-pair)))
 	  (and (not (eq? (row q1) (row q2)))
-		   (not (eq? (col q1) (col q2)))
-		   (not (on-diag q1 q2)))))
-  (define (choose2 things)
-	(define (c-for-one c xs)
-	  (if (null? xs)
-		'()
-		(cons (cons c (car xs)) (c-for-one c (cdr xs)))))
-	(if (null? things)
-	  '()
-	  (append (c-for-one (car things) (cdr things))
-			  (choose2 (cdr things)))))
+		   (and (not (eq? (col q1) (col q2)))
+				(not (on-diag q1 q2))))))
   (define (map f xs)
 	(if (null? xs)
 	  '()
@@ -579,6 +569,7 @@
 	(if (null? (cdr xs))
 	  (car xs)
 	  (f (car xs) (reduce f (cdr xs)))))
+  ; test if q is safe from all the queens in qs
   (define (safe-test q qs)
 	(reduce and 
 			(map safe?
@@ -601,7 +592,7 @@
 				(require (safe-test q8 (list q1 q2 q3 q4 q5 q6 q7)))
 				(list q1 q2 q3 q4 q5 q6 q7 q8))))))))))
 
-
+#|
 
 ;;;SECTION 4.3.2 -- Parsing natural language
 (interpret '(define nouns '(nouns student professor cat class)))
