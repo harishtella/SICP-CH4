@@ -478,8 +478,8 @@
   (force (cdr x)))
 
 (define (list->stream lst)
-  (if (null? (cdr lst))
-	(car lst)
+  (if (null? lst)
+	'()
 	(cons-stream (car lst) (list->stream (cdr lst)))))
 
 (define (stream-map proc s)
@@ -662,6 +662,20 @@
       (or (supervisor ?staff-person ?boss)
           (and (supervisor ?staff-person ?middle-manager)
                (outranked-by ?middle-manager ?boss))))
+
+; EX 4.57
+(rule (can-replace ?p1 ?p2)
+	  (and 
+		(or (and (job ?p1 ?j) 
+				 (job ?p2 ?j))
+			(and (job ?p1 ?j1)
+				 (job ?p2 ?j2)
+				 (can-do-job ?j1 ?j2)))
+		;; for some reason can't put the following clause first
+		;; in the and
+		(not (same ?p1 ?p2))))
+
+
 ))
 
 
@@ -669,3 +683,4 @@
 ;; right away when this file is loaded
 (initialize-data-base microshaft-data-base)
 (query-driver-loop)
+
