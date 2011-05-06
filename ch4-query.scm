@@ -323,6 +323,7 @@
 ;;;SECTION 4.4.4.6
 ;;;Stream operations
 
+
 (define (stream-append-delayed s1 delayed-s2)
   (if (stream-null? s1)
       (force delayed-s2)
@@ -470,6 +471,16 @@
 
 ;;;;Stream support from Chapter 3
 
+(define (stream-car x)
+  (car x))
+
+(define (stream-cdr x)
+  (force (cdr x)))
+
+(define (list->stream lst)
+  (if (null? (cdr lst))
+	(car lst)
+	(cons-stream (car lst) (list->stream (cdr lst)))))
 
 (define (stream-map proc s)
   (if (stream-null? s)
@@ -652,3 +663,9 @@
           (and (supervisor ?staff-person ?middle-manager)
                (outranked-by ?middle-manager ?boss))))
 ))
+
+
+;; start the query input loop with db loaded
+;; right away when this file is loaded
+(initialize-data-base microshaft-data-base)
+(query-driver-loop)
