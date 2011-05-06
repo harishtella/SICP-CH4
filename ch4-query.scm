@@ -675,12 +675,62 @@
 		;; in the and
 		(not (same ?p1 ?p2))))
 
+; EX 4.58
+(rule (bigshot ?p ?div)
+	  (and (job ?p (?div . ?something))
+		   (or
+			 (and
+			   (supervisor ?p ?p2)
+			   (job ?p2 (?div2 . ?somthing2))
+			   (not (same ?div2 ?div)))
+			 (not (supervisor ?p ?p2)))))
+
 
 ))
 
+; EX 4.61
+(define next-to-db 
+  '(
+(rule (?x next-to ?y in (?x ?y . ?u))) 
+(rule (?x next-to ?y in (?v . ?z)) 
+      (?x next-to ?y in ?z)) 
+
+; EX 4.62
+; can't test this until lisp-value works
+(rule (last-pair (?a . ?b ) ?a)
+	  (lisp-value eq? ?b '()))
+(rule (last-pair (?x . ?y) ?a) 
+	  (last-pair ?y ?a))
+))
+
+; EX 4.63
+(define bible-db
+  '(
+(son Adam Cain) 
+(son Cain Enoch) 
+(son Enoch Irad) 
+(son Irad Mehujael) 
+(son Mehujael Methushael) 
+(son Methushael Lamech) 
+(wife Lamech Ada) 
+(son Ada Jabal) 
+(son Ada Jubal) 
+
+(rule (grandson ?gf ?gs)
+	  (and
+		(son ?gf ?f)
+		(son ?f ?gs)))
+(rule (son ?h ?s)
+	  (and
+		(wife ?h ?w)
+		(son ?w ?s)))
+))
 
 ;; start the query input loop with db loaded
 ;; right away when this file is loaded
-(initialize-data-base microshaft-data-base)
+
+;(initialize-data-base microshaft-data-base)
+;(initialize-data-base next-to-db)
+(initialize-data-base bible-db)
 (query-driver-loop)
 
