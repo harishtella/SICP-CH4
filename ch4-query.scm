@@ -688,20 +688,35 @@
 
 ))
 
-; EX 4.61
+
+
 (define next-to-db 
   '(
+
+(rule (append-to-form () ?y ?y))
+(rule (append-to-form (?u . ?v) ?y (?u . ?z))
+      (append-to-form ?v ?y ?z))
+
+; EX 4.61
 (rule (?x next-to ?y in (?x ?y . ?u))) 
 (rule (?x next-to ?y in (?v . ?z)) 
       (?x next-to ?y in ?z)) 
 
 ; EX 4.62
-; can't test this until lisp-value works
-(rule (last-pair (?a . ?b ) ?a)
-	  (lisp-value eq? ?b '()))
+(rule (last-pair (?a . ()) ?a))
 (rule (last-pair (?x . ?y) ?a) 
 	  (last-pair ?y ?a))
+
+; EX 4.68
+(rule (reverse (?a . ?b) (?x . ?y))
+	  (and 
+		(append-to-from ?p ?a (?x . ?y))
+		(reverse ?b ?p)))
+(rule (reverse (?a . ()) (?a . ())))
+
 ))
+
+
 
 ; EX 4.63
 (define bible-db
@@ -725,23 +740,35 @@
 		(wife ?h ?w)
 		(son ?w ?s)))
 ; EX 4.69 
-; can't test this until lisp-value is fixed
+(rule (same ?x ?x))
 (rule (gs-list (?x . ?xs))
-	  (or (lisp-value eq? ?x 'grandson)
-		  (gs-list ?xs)))
+	  (gs-list ?xs))
+(rule (gs-list (?x . ()))
+	  (same ?x grandson))
+(rule (a-gs ?x)
+	  (same ?x grandson))
+;;tricky part was to put the son clause first in the and
+;;so we could get a binding for x and narrow options down
 (rule ((great . ?rel) ?gp ?p)
 	  (and 
-		(gs-list ?rel)
-		(?rel ?x p)
-		(?son ?gp ?x)))
-
+		(son ?gp ?x)
+		(?rel ?x ?p)
+		(gs-list ?rel)))
+(rule ((great . (?rel . ())) ?gp ?p)
+	  (and 
+		(son ?gp ?x)
+		(?rel ?x ?p)
+		(a-gs ?rel)))
 ))
+
+
+
 
 ;; start the query input loop with db loaded
 ;; right away when this file is loaded
 
-(initialize-data-base microshaft-data-base)
+;(initialize-data-base microshaft-data-base)
 ;(initialize-data-base next-to-db)
-;(initialize-data-base bible-db)
+(initialize-data-base bible-db)
 (query-driver-loop)
 
