@@ -724,13 +724,24 @@
 	  (and
 		(wife ?h ?w)
 		(son ?w ?s)))
+; EX 4.69 
+; can't test this until lisp-value is fixed
+(rule (gs-list (?x . ?xs))
+	  (or (lisp-value eq? ?x 'grandson)
+		  (gs-list ?xs)))
+(rule ((great . ?rel) ?gp ?p)
+	  (and 
+		(gs-list ?rel)
+		(?rel ?x p)
+		(?son ?gp ?x)))
+
 ))
 
 ;; start the query input loop with db loaded
 ;; right away when this file is loaded
 
-;(initialize-data-base microshaft-data-base)
+(initialize-data-base microshaft-data-base)
 ;(initialize-data-base next-to-db)
-(initialize-data-base bible-db)
+;(initialize-data-base bible-db)
 (query-driver-loop)
 
