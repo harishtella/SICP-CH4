@@ -123,6 +123,11 @@
 
 ;;(put 'lisp-value 'qeval lisp-value)
 
+; gives me an environment
+; found this procedure at 
+; http://lavica.fesb.hr/cgi-bin/info2html?(r5rs)Eval
+(define user-initial-environment (scheme-report-environment 5))
+
 (define (execute exp)
   (apply (eval (predicate exp) user-initial-environment)
          (args exp)))
@@ -767,8 +772,8 @@
 ;; start the query input loop with db loaded
 ;; right away when this file is loaded
 
-;(initialize-data-base microshaft-data-base)
-(initialize-data-base next-to-db)
+(initialize-data-base microshaft-data-base)
+;(initialize-data-base next-to-db)
 ;(initialize-data-base bible-db)
 (query-driver-loop)
 
