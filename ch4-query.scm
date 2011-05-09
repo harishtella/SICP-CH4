@@ -754,7 +754,7 @@
 		(son ?gp ?x)
 		(?rel ?x ?p)
 		(gs-list ?rel)))
-(rule ((great . (?rel . ())) ?gp ?p)
+(rule ((great . (?rel)) ?gp ?p)
 	  (and 
 		(son ?gp ?x)
 		(?rel ?x ?p)
