@@ -703,16 +703,16 @@
       (?x next-to ?y in ?z)) 
 
 ; EX 4.62
-(rule (last-pair (?a . ()) ?a))
+(rule (last-pair (?a) ?a))
 (rule (last-pair (?x . ?y) ?a) 
 	  (last-pair ?y ?a))
 
 ; EX 4.68
-(rule (reverse (?a . ?b) (?x . ?y))
+(rule (reverse (?a . ?b) ?r)
 	  (and 
-		(append-to-from ?p ?a (?x . ?y))
-		(reverse ?b ?p)))
-(rule (reverse (?a . ()) (?a . ())))
+		(reverse ?b ?p)
+		(append-to-from ?p (?a) ?r)))
+(rule (reverse (?a) (?a)))
 
 ))
 
@@ -768,7 +768,7 @@
 ;; right away when this file is loaded
 
 ;(initialize-data-base microshaft-data-base)
-;(initialize-data-base next-to-db)
-(initialize-data-base bible-db)
+(initialize-data-base next-to-db)
+;(initialize-data-base bible-db)
 (query-driver-loop)
 
