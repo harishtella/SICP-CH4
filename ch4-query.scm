@@ -108,6 +108,19 @@
 
 ;;(put 'not 'qeval negate)
 
+; EX 4.75
+(define (uniquely-asserted operands frame-stream)
+  (stream-flatmap
+   (lambda (frame)
+	 (let ((res (qeval (uniqued-query operands)
+					   (singleton-stream frame))))
+	   (if (singleton-stream? res)
+		 res
+		 the-empty-stream)))
+   frame-stream))
+
+;;(put 'unique 'qeval uniquely-asserted)
+
 (define (lisp-value call frame-stream)
   (stream-flatmap
    (lambda (frame)
@@ -123,8 +136,7 @@
 
 ;;(put 'lisp-value 'qeval lisp-value)
 
-; gives me an environment
-; found this procedure at 
+; gives me an environment, found this procedure at 
 ; http://lavica.fesb.hr/cgi-bin/info2html?(r5rs)Eval
 (define user-initial-environment (scheme-report-environment 5))
 
@@ -354,7 +366,6 @@
        (stream-car stream)
        (delay (flatten-stream (stream-cdr stream))))))
 
-
 (define (singleton-stream x)
   (cons-stream x the-empty-stream))
 
@@ -387,6 +398,7 @@
 (define (rest-disjuncts exps) (cdr exps))
 
 (define (negated-query exps) (car exps))
+(define (uniqued-query exps) (car exps))
 
 (define (predicate exps) (car exps))
 (define (args exps) (cdr exps))
@@ -486,6 +498,9 @@
   (if (null? lst)
 	'()
 	(cons-stream (car lst) (list->stream (cdr lst)))))
+
+(define (singleton-stream? x)
+  (null? (stream-cdr x)))
 
 (define (stream-map proc s)
   (if (stream-null? s)
@@ -589,6 +604,7 @@
   (put 'not 'qeval negate)
   (put 'lisp-value 'qeval lisp-value)
   (put 'always-true 'qeval always-true)
+  (put 'unique 'qeval uniquely-asserted) 
   (deal-out rules-and-assertions '() '()))
 
 ;; Do following to reinit the data base from microshaft-data-base
@@ -697,7 +713,7 @@
 
 (define next-to-db 
   '(
-
+(rule (same ?x ?x))
 (rule (append-to-form () ?y ?y))
 (rule (append-to-form (?u . ?v) ?y (?u . ?z))
       (append-to-form ?v ?y ?z))
@@ -713,10 +729,22 @@
 	  (last-pair ?y ?a))
 
 ; EX 4.68
-(rule (reverse (?a . ?b) ?r)
+; currently broken, goes into infinite loop
+; in (reverse ? (1 2 3)) direction
+;
+; (1 . 2 3 4)  (4 . 3 2 1)
+; (4 . 3 2)  
+;
+; (1 . (2 3) ) (3 . (2 1) )
+; (3 . (2) )
+(rule (reverse (?a . ?b) (?r . ?t))
 	  (and 
-		(reverse ?b ?p)
-		(append-to-from ?p (?a) ?r)))
+		(reverse ?b (?r . ?o))
+		(append-to-form ?o ?as ?t)
+		(same ?as (?a))))
+		
+		;(same ?as (?a))
+		;(append-to-form (?p . ?o) ?as (?r . ?t))))
 (rule (reverse (?a) (?a)))
 
 ))
