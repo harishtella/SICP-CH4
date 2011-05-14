@@ -85,6 +85,94 @@
 ;;(put 'and 'qeval conjoin)
 
 
+; EX 4.76 
+; could use a heck of a lot of cleaning up
+(define (conjoin-fast conjuncts frame-stream)
+  (if (empty-conjunction? conjuncts)
+      frame-stream
+	  (unify-frame-streams
+		;out puts a list of frame streams
+		(map (lambda (conjunct) 
+			   (qeval conjunct frame-stream))
+			 conjuncts))))
+
+;;(put 'and 'qeval conjoin-fast)
+
+(define (unify-frame-streams fs)
+  (cond ((null? fs) the-empty-stream)
+		((null? (cdr fs)) (car fs))
+		(else (unify-2-frame-streams (car fs) 
+									 (unify-frame-streams (cdr fs))))))
+
+(define (unify-2-frame-streams fs1 fs2)
+  (define (choose2 fs1 fs2)
+	(if (null? fs1)
+	  '()
+	  (append (pairify (stream-car fs1) fs2)
+			  (choose2 (stream-cdr fs1) fs2))))
+  (define (pairify f1 fs2)
+	(if (null? fs2)
+	  '()
+	  (cons (cons f1 (stream-car fs2))
+			(pairify f1 (stream-cdr fs2)))))
+  (define (filter fn lst)
+	(cond ((null? lst) '())
+		  ((fn (car lst)) (filter fn (cdr lst)))
+		  (else (cons (car lst) (filter fn (cdr lst))))))
+  (list->stream
+	(filter 
+	  (lambda (x) (eq? x 'failure))
+	  (map (lambda (pair-of-frames) (unify-frames (car pair-of-frames)
+												  (cdr pair-of-frames)))
+		   (choose2 fs1 fs2)))))
+
+;return a unified frame or failure
+(define (unify-frames f1 f2)
+  ;didn't fully test failure? and detect
+  (define (failure? lst)
+	(detect (lambda (x) (eq? x 'bind-conflict)) 
+			lst))
+  (define (detect fn lst)
+	(cond ((null? lst) false)
+		  ((fn (car lst)) true)
+		  (else (detect fn (cdr lst)))))
+  (define (check-binding b frame)
+	(let ((b-in-frame (binding-in-frame (binding-variable b)
+										frame)))
+	  (cond ((eq? false b-in-frame) b)
+			((equal? (binding-value b)
+					 (binding-value b-in-frame)) b)
+			(else 'bind-conflict))))
+  (define (phase1 f1 f2)
+	(if (null? f1)
+	  '()
+	  (let ((b1 (car f1)))
+		(cons (check-binding b1 f2) 
+			  (phase1 (cdr f1) f2)))))
+  (define (phase2 f1 f2)
+	(if (null? f2)
+	  '()
+	  (let ((b1 (car f2)))
+		(if (eq? false (binding-in-frame 
+						 (binding-variable b1) 
+						 f1))
+		  (cons b1 (phase2 f1 (cdr f2)))
+		  (phase2 f1 (cdr f2))))))
+  (let ((result (append (phase1 f1 f2) 
+						(phase2 f1 f2))))
+	(if (failure? result)
+	  'failure
+	  result)))
+	  
+
+
+
+
+
+
+
+
+
 (define (disjoin disjuncts frame-stream)
   (if (empty-disjunction? disjuncts)
       the-empty-stream
@@ -599,7 +687,7 @@
   (let ((operation-table (make-table)))
     (set! get (operation-table 'lookup-proc))
     (set! put (operation-table 'insert-proc!)))
-  (put 'and 'qeval conjoin)
+  (put 'and 'qeval conjoin-fast)
   (put 'or 'qeval disjoin)
   (put 'not 'qeval negate)
   (put 'lisp-value 'qeval lisp-value)
