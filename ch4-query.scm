@@ -38,7 +38,9 @@
                             frame
                             (lambda (v f)
                               (contract-question-mark v))))
-             (qeval q (singleton-stream '()))))
+			 ; initial frame is now list with two empty lists
+			 ; 1st for delayed filters, 2nd for binding data
+             (check-delayed-filters (qeval q (singleton-stream '(()()))))))
            (query-driver-loop)))))
 
 (define (instantiate exp frame unbound-var-handler)
@@ -58,7 +60,8 @@
 ;;;The Evaluator
 
 (define (qeval query frame-stream)
-  (let ((qproc (get (type query) 'qeval)))
+  (let ((qproc (get (type query) 'qeval))
+		(frame-stream (check-delayed-filters frame-stream)))
     (if qproc
         (qproc (contents query) frame-stream)
         (simple-query query frame-stream))))
@@ -85,6 +88,13 @@
 ;;(put 'and 'qeval conjoin)
 
 
+; TODO
+; conjoin-fast does not behave like conjoin for theses:
+;(and (supervisor ?x ?y) 
+;     (not (job ?x (computer programmer)))) 
+;(and (not (job ?x (compute     (supervisor ?x ?y)) 
+; 
+
 ; EX 4.76 
 (define (conjoin-fast conjuncts frame-stream)
   (if (empty-conjunction? conjuncts)
@@ -102,7 +112,6 @@
 	the-empty-stream
 	(unify-2-frame-streams (car fs) 
 						   (unify-frame-streams (cdr fs)))))
-
 (define (unify-2-frame-streams fs1 fs2)
   (cond ((null? fs1) fs2)
 		((null? fs2) fs1)
@@ -113,7 +122,6 @@
 			  (map (lambda (pair-of-frames) (unify-frames (car pair-of-frames)
 														  (cdr pair-of-frames)))
 				   (choose2 fs1 fs2)))))))
-
 ;return a unified frame or 'failure
 (define (unify-frames f1 f2)
   (define (failure? lst)
@@ -129,36 +137,16 @@
 	(not (eq? false (binding-in-frame 
 					  (binding-variable b)
 					  frame))))
+  ; gets bindings from f1, checks for conflicts with f2
   (define (part1 f1 f2)
 	(map (lambda (b) (check-binding b f2))
 		 f1))
+  ; gets bindings from f2 that are not in f1
   (define (part2 f1 f2)
   	(filter (lambda (b) (binding-is-in-frame b f1))
 			f2))
   (let ((result (append (part1 f1 f2) (part2 f1 f2))))
 	(if (failure? result) 'failure result)))
-
-
-; utility functions I need 
-(define (filter fn lst)
-  (cond ((null? lst) '())
-		((fn (car lst)) (filter fn (cdr lst)))
-		(else (cons (car lst) (filter fn (cdr lst))))))
-(define (choose2 fs1 fs2)
-  (if (null? fs1)
-	'()
-	(append (pairify (stream-car fs1) fs2)
-			(choose2 (stream-cdr fs1) fs2))))
-(define (pairify f1 fs2)
-  (if (null? fs2)
-	'()
-	(cons (cons f1 (stream-car fs2))
-		  (pairify f1 (stream-cdr fs2)))))
-(define (detect fn lst)
-  (cond ((null? lst) false)
-		((fn (car lst)) true)
-		(else (detect fn (cdr lst)))))
-
 
 
 
@@ -185,6 +173,72 @@
    frame-stream))
 
 ;;(put 'not 'qeval negate)
+
+
+
+
+
+
+
+#|
+; EX 4.77 
+(define (negate-delayed operands frame-stream)
+
+  
+  (define (query-vars q)
+	(cond ((var? q) (list q))
+		  ((pair? q) (let ((vars-in-car (query-vars (car q))))
+					   (if (not (null? vars-in-car))
+							(append vars-in-car (query-vars (cdr q)))
+							(query-vars (cdr q)))))
+		  (else '() )))
+
+  (define (query-vars-bound? query frame)
+	(reduce (lambda (x y) (and x y))
+			(map (lambda (v) (variable-in-frame? v frame))
+				 (query-vars query))))
+
+  (stream-flatmap
+   (lambda (frame)
+	 (if (query-vars-bound? negated-query frame)
+	   ; do the normal filtering
+	   (if (stream-null? (qeval (negated-query operands)
+								(singleton-stream frame)))
+		 (singleton-stream frame)
+		 the-empty-stream)
+	   ; add the delayed filter as a binding in the frame
+	   (singleton-stream (add-binding 'delayed-not 
+									  (lambda () ) 
+									  frame))))
+   frame-stream))
+
+(define (variable-in-frame? v frame)
+  (not (eq? false (binding-in-frame v frame))))
+ 
+(define (has-delayed-filter? frame)
+  (variable-in-frame? 'delayed-not frame))
+
+(define (try-delayed-filter frame)
+  ((get-value (variable-in-frame? 'delayed-not frame))))
+
+(define (check-delayed-filters frame-stream)
+  (stream-flatmap (lambda (frame) (if (has-delayed-filter? frame) 
+									; try the filter
+									(try-delayed-filter frame)
+									; just return the frame
+									(singleton-stream frame)))
+				  frame-stream))
+|#
+
+(define (check-delayed-filters x) x)
+
+;;(put 'not 'qeval negate-delayed)
+
+
+
+
+
+
 
 ; EX 4.75
 (define (uniquely-asserted operands frame-stream)
@@ -558,7 +612,26 @@
 
 (define (extend variable value frame)
   (cons (make-binding variable value) frame))
-
+
+;; Data selectors for new frame structure that supports 
+;; delayed filtering
+;; 
+;; Has the form of:  ( (delayed filters....) (frame-data ...) ) 
+;;
+(define (frame-filters frame)
+  (car frame))
+(define (frame-data frame)
+  (cdr frame))
+
+(define (next-binding frame)
+  (car (frame-data frame)))
+(define (rest-bindings frame)
+  (cdr (frame-data frame)))
+(define (binding-in-frame variable frame)
+  (assoc variable (frame-data frame)))
+(define (extend variable value frame)
+  (cons (frame-filters frame)
+		(cons (make-binding variable value) (frame-data frame))))
 
 ;;;;From Section 4.1
 
@@ -657,6 +730,31 @@
             (else (error "Unknown operation -- TABLE" m))))
     dispatch))
 
+
+; utility functions I need 
+
+(define (filter fn lst)
+  (cond ((null? lst) '())
+		((fn (car lst)) (filter fn (cdr lst)))
+		(else (cons (car lst) (filter fn (cdr lst))))))
+
+(define (choose2 fs1 fs2)
+  (if (null? fs1)
+	'()
+	(append (pairify (stream-car fs1) fs2)
+			(choose2 (stream-cdr fs1) fs2))))
+
+(define (pairify f1 fs2)
+  (if (null? fs2)
+	'()
+	(cons (cons f1 (stream-car fs2))
+		  (pairify f1 (stream-cdr fs2)))))
+
+(define (detect fn lst)
+  (cond ((null? lst) false)
+		((fn (car lst)) true)
+		(else (detect fn (cdr lst)))))
+
 ;;;; From instructor's manual
 
 (define get '())
@@ -684,7 +782,7 @@
   (let ((operation-table (make-table)))
     (set! get (operation-table 'lookup-proc))
     (set! put (operation-table 'insert-proc!)))
-  (put 'and 'qeval conjoin-fast)
+  (put 'and 'qeval conjoin)
   (put 'or 'qeval disjoin)
   (put 'not 'qeval negate)
   (put 'lisp-value 'qeval lisp-value)
