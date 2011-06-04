@@ -1,18 +1,6 @@
 ;;;;QUERY SYSTEM FROM SECTION 4.4.4 OF
 ;;;; STRUCTURE AND INTERPRETATION OF COMPUTER PROGRAMS
 
-;;;;Matches code in ch4.scm
-;;;;Includes:
-;;;;  -- supporting code from 4.1, chapter 3, and instructor's manual
-;;;;  -- data base from Section 4.4.1 -- see microshaft-data-base below
-
-;;;;This file can be loaded into Scheme as a whole.
-;;;;In order to run the query system, the Scheme must support streams.
-
-;;;;NB. PUT's are commented out and no top-level table is set up.
-;;;;Instead use initialize-data-base (from manual), supplied in this file.
-
-
 ;;;SECTION 4.4.4.1
 ;;;The Driver Loop and Instantiation
 
@@ -85,6 +73,13 @@
 ;;(put 'and 'qeval conjoin)
 
 
+
+; TODO
+; conjoin-fast does not behave like conjoin for theses:
+;(and (supervisor ?x ?y) 
+;     (not (job ?x (computer programmer)))) 
+;(and (not (job ?x (compute     (supervisor ?x ?y)) 
+; 
 ; EX 4.76 
 (define (conjoin-fast conjuncts frame-stream)
   (if (empty-conjunction? conjuncts)
@@ -684,7 +679,7 @@
   (let ((operation-table (make-table)))
     (set! get (operation-table 'lookup-proc))
     (set! put (operation-table 'insert-proc!)))
-  (put 'and 'qeval conjoin-fast)
+  (put 'and 'qeval conjoin)
   (put 'or 'qeval disjoin)
   (put 'not 'qeval negate)
   (put 'lisp-value 'qeval lisp-value)
@@ -692,9 +687,7 @@
   (put 'unique 'qeval uniquely-asserted) 
   (deal-out rules-and-assertions '() '()))
 
-;; Do following to reinit the data base from microshaft-data-base
-;;  in Scheme (not in the query driver loop)
-;; (initialize-data-base microshaft-data-base)
+
 
 (define microshaft-data-base
   '(
@@ -796,6 +789,9 @@
 
 
 
+
+
+
 (define next-to-db 
   '(
 (rule (same ?x ?x))
@@ -833,6 +829,10 @@
 (rule (reverse (?a) (?a)))
 
 ))
+
+
+
+
 
 
 
