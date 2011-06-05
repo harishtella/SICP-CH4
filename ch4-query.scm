@@ -134,28 +134,6 @@
 	(if (failure? result) 'failure result)))
 
 
-; utility functions I need 
-(define (filter fn lst)
-  (cond ((null? lst) '())
-		((fn (car lst)) (filter fn (cdr lst)))
-		(else (cons (car lst) (filter fn (cdr lst))))))
-(define (choose2 fs1 fs2)
-  (if (null? fs1)
-	'()
-	(append (pairify (stream-car fs1) fs2)
-			(choose2 (stream-cdr fs1) fs2))))
-(define (pairify f1 fs2)
-  (if (null? fs2)
-	'()
-	(cons (cons f1 (stream-car fs2))
-		  (pairify f1 (stream-cdr fs2)))))
-(define (detect fn lst)
-  (cond ((null? lst) false)
-		((fn (car lst)) true)
-		(else (detect fn (cdr lst)))))
-
-
-
 
 
 (define (disjoin disjuncts frame-stream)
@@ -171,7 +149,7 @@
 ;;;Filters
 
 (define (negate operands frame-stream)
-  (stream-flatmap
+  (simple-stream-flatmap
    (lambda (frame)
      (if (stream-null? (qeval (negated-query operands)
                               (singleton-stream frame)))
@@ -195,7 +173,7 @@
 ;;(put 'unique 'qeval uniquely-asserted)
 
 (define (lisp-value call frame-stream)
-  (stream-flatmap
+  (simple-stream-flatmap
    (lambda (frame)
      (if (execute
           (instantiate
@@ -208,6 +186,9 @@
    frame-stream))
 
 ;;(put 'lisp-value 'qeval lisp-value)
+
+
+
 
 ; gives me an environment, found this procedure at 
 ; http://lavica.fesb.hr/cgi-bin/info2html?(r5rs)Eval
@@ -225,9 +206,9 @@
 ;;;Finding Assertions by Pattern Matching
 
 (define (find-assertions pattern frame)
-  (stream-flatmap (lambda (datum)
-                    (check-an-assertion datum pattern frame))
-                  (fetch-assertions pattern frame)))
+  (simple-stream-flatmap (lambda (datum)
+						   (check-an-assertion datum pattern frame))
+						 (fetch-assertions pattern frame)))
 
 (define (check-an-assertion assertion query-pat query-frame)
   (let ((match-result
@@ -413,6 +394,14 @@
 ;;;SECTION 4.4.4.6
 ;;;Stream operations
 
+; EX 4.74
+(define (simple-stream-flatmap proc s) 
+  (simple-flatten (stream-map proc s))) 
+
+(define (simple-flatten stream) 
+  (stream-map stream-car  
+              (stream-filter (lambda (x) (not (stream-null? x))) 
+							 stream))) 
 
 (define (stream-append-delayed s1 delayed-s2)
   (if (stream-null? s1)
@@ -619,6 +608,29 @@
       s2
       (cons-stream (stream-car s1)
                    (interleave s2 (stream-cdr s1)))))
+
+
+;;;;;; Utility functions 
+
+(define (filter fn lst)
+  (cond ((null? lst) '())
+		((fn (car lst)) (filter fn (cdr lst)))
+		(else (cons (car lst) (filter fn (cdr lst))))))
+(define (choose2 fs1 fs2)
+  (if (null? fs1)
+	'()
+	(append (pairify (stream-car fs1) fs2)
+			(choose2 (stream-cdr fs1) fs2))))
+(define (pairify f1 fs2)
+  (if (null? fs2)
+	'()
+	(cons (cons f1 (stream-car fs2))
+		  (pairify f1 (stream-cdr fs2)))))
+(define (detect fn lst)
+  (cond ((null? lst) false)
+		((fn (car lst)) true)
+		(else (detect fn (cdr lst)))))
+
 
 ;;;;Table support from Chapter 3, Section 3.3.3 (local tables)
 
