@@ -823,21 +823,23 @@
 
 ; EX 4.68
 ; currently broken, goes into infinite loop
-; in (reverse ? (1 2 3)) direction
+; in (reverse ?x (1 2 3)) direction
 ;
 ; (1 . 2 3 4)  (4 . 3 2 1)
 ; (4 . 3 2)  
 ;
 ; (1 . (2 3) ) (3 . (2 1) )
 ; (3 . (2) )
-(rule (reverse (?a . ?b) (?r . ?t))
+
+;(rule (reverse (?a . ?b) (?r . ?t))
+;	  (and 
+;		(reverse ?b (?r . ?o))
+;		(append-to-form ?o (?a) ?t)))
+(rule (reverse (?a . ?b) ?t)
 	  (and 
-		(reverse ?b (?r . ?o))
-		(append-to-form ?o ?as ?t)
-		(same ?as (?a))))
-		
-		;(same ?as (?a))
-		;(append-to-form (?p . ?o) ?as (?r . ?t))))
+		(reverse ?b ?r)
+		(append-to-form ?r (?a) ?t)))
+
 (rule (reverse (?a) (?a)))
 
 ))
@@ -897,8 +899,8 @@
 ;; start the query input loop with db loaded
 ;; right away when this file is loaded
 
-(initialize-data-base microshaft-data-base)
-;(initialize-data-base next-to-db)
+;(initialize-data-base microshaft-data-base)
+(initialize-data-base next-to-db)
 ;(initialize-data-base bible-db)
 (query-driver-loop)
 
